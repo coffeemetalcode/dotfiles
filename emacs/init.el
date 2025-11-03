@@ -1,27 +1,4 @@
-;; (setq inhibit-startup-message t)
-;; (tool-bar-mode -1) ;; suppress toolbar (i.e. 'Open', 'Close', 'Save', etc.)
-(menu-bar-mode -1) ;; supress menubar (i.e. 'File', 'Edit', etc.)
-(setq visible-bell t) ;; set visual bell
-
-(set-face-attribute 'default nil
-		    :font "FiraCode Nerd Font Light"
-		    ;; :font "Fira Code Light"
-		    :height 115)
-
-(load-theme 'atom-one-dark t)
-;; (load-theme ' doom-feather-dark t)
-
-(column-number-mode)
-(global-display-line-numbers-mode 1)
-(dolist (mode '(org-mode-hook
-		term-mode-hook
-		eshell-mode-hook
-		shell-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
-
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
-;; Package Repos
+;; package repo management
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
 			 ("org" . "https://orgmode.org/elpa/")
@@ -29,84 +6,64 @@
 
 (package-initialize)
 (unless package-archive-contents
-  (pacakge-refresh-contents))
+  (package-refresh-contents))
 
 (unless (package-installed-p 'use-package)
-  (package-install 'use-package))
+  (package-install 'use-pacakge))
 
 (require 'use-package)
-(setq use-pacakge-always-ensure t)
+(setq use-package-alwasy-ensure t)
 
-(use-package command-log-mode)
-;; (command-log-mode 1)
+;;
+;; end package repo management
+;;
 
-;; Counsel
-(use-package counsel)
+;;
+;; install packages
+;;
 
-;; Ivy (completion framework)
-(use-package ivy)
-(ivy-mode 1)
+(use-package command-log-mode
+  :ensure t)
 
-(global-set-key (kbd "C-M-j") 'counsel-switch-buffer)
+(use-package counsel
+  :ensure t
+  :init (ivy-mode 1))
 
-;; resist the tempation to hand edit below
-;; ---------------------------------------
+(use-package ivy
+  :ensure t)
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("728907dc0d7dd975a051fe391450521304becb3c9a9c283c2876d39d08c53a87" "75eef60308d7328ed14fa27002e85de255c2342e73275173a14ed3aa1643d545" default))
- '(package-selected-packages
-   '(magit counsel-projectile projectile soft-charcoal-theme ivy-rich which-key doom-modeline counsel rainbow-delimiters fira-code-mode exec-path-from-shell command-log-mode atom-one-dark-theme)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-(use-package nerd-icons
-  ;; :custom
-  ;; The Nerd Font you want to use in GUI
-  ;; "Symbols Nerd Font Mono" is the default and is recommended
-  ;; but you can use any other Nerd Font if you want
-  ;; (nerd-icons-font-family "Symbols Nerd Font Mono")
-  )
-
-(use-package all-the-icons)
+(use-package doom-themes
+  :ensure t)
 
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 35)))
 
-(use-package doom-themes)
+(use-package all-the-icons
+  :ensure t)
 
 (use-package rainbow-delimiters
+  :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
 
-(electric-pair-mode t)
-
 (use-package which-key
+  :ensure t
   :init (which-key-mode)
   :diminish which-key-mode
-  :config (setq which-key-idle-delay 0.5))
+  :config (setq which-key-idle-delay 0.75))
 
 (use-package ivy-rich
-  :init
-  (ivy-rich-mode 1))
+  :ensure t
+  :init (ivy-rich-mode 1))
 
 (use-package counsel
+  :ensure t
   :bind (("M-x" . counsel-M-x)
 	 ("C-x b" . counsel-ibuffer)
-	 ("C-x C-f" . counsel-find-file)
 	 :map minibuffer-local-map
 	 ("C-r" . 'counsel-minibuffer-history))
-  :config
-  (setq ivy-initial-inputs-alist nil))
+  :config (setq ivy-initial-inputs-alist nil))
 
 (use-package helpful
   :ensure t
@@ -123,41 +80,8 @@
   :ensure t)
 (global-company-mode)
 
-;; TODO: general, and keybindings for different categories of command
-;; i.e. 'File', 'Window', 'Git', and so forth
-
-(autoload 'comment-tags-mode "comment-tags-mode")
-;; needs setup
-;; https://github.com/vincekd/comment-tags
-
-;; evil mode
-;; this mode messes with some important keybindings
-;; "C-y" is "S-<insertchar>"
-;; (use-package evil
-;;   :init
-;;   (setq evil-want-integration t)
-;;   (setq evil-want-keybinding nil)
-;;   (setq evil-want-C-u-scroll t)
-;;   (setq evil-want-C-i-jump nil)
-;;   :config
-;;   (evil-mode 1)
-;;   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-;;   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
-
-;;   ;; Use visual line motions even outside of visual-line-mode buffers
-;;   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-;;   (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
-
-;;   (evil-set-initial-state 'messages-buffer-mode 'normal)
-;;   (evil-set-initial-state 'dashboard-mode 'normal))
-
-;; (use-package evil-collection
-;;   :after evil
-;;   :config
-;;   (evil-collection-init))
-
-;; projectile
- (use-package projectile
+(use-package projectile
+  :ensure t
   :diminish projectile-mode
   :config (projectile-mode)
   :custom ((projectile-completion-system 'ivy))
@@ -170,9 +94,69 @@
   (setq projectile-switch-project-action #'projectile-dired))
 
 (use-package counsel-projectile
+  :ensure t
   :after projectile
   :config (counsel-projectile-mode))
 
 (use-package magit
-  :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+  :ensure t
+  :custom (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+
+(use-package treemacs
+  :ensure t
+  :bind
+  ;; think about these keybindings
+  (:map global-map
+	([f8] . treemacs)
+	("C-<f8>" . treemacs-select-window))
+  :config
+  (setq treemacs-is-never-other-window t))
+
+(use-package atom-one-dark-theme
+  :ensure t)
+
+;;
+;; end install packages
+;;
+
+;;
+;; look and feel
+;;
+
+(menu-bar-mode -1)    ;; supress menubar (i.e. 'File', 'Edit', etc.)
+(scroll-bar-mode -1)  ;; disable vertical scroll bars
+(setq visible-bell t) ;; set visual bell
+(set-face-attribute 'default nil
+		    :font "FiraCode Nerd Font Light"
+		    :height 115)
+(electric-pair-mode t)
+(load-theme 'atom-one-dark t)
+(column-number-mode)
+(global-display-line-numbers-mode 1)
+(setq-default truncate-lines t)
+(dolist (mode '(org-mode-hook
+		term-mode-hook
+		eshell-mode-hook
+		shell-mode-hook
+		treemacs-mode-hook))
+  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+(command-log-mode 1)
+(setq warning-minimum-level :error)
+
+;;
+;; end look and feel
+;;
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(atom-one-dark-theme atom-one-dark all-the-icons treemacs magit counsel-projectile projectile company helpful ivy-rich which-key rainbow-delimiters doom-modeline doom-themes counsel command-log-mode)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
