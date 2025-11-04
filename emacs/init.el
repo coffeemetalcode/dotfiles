@@ -9,10 +9,10 @@
   (package-refresh-contents))
 
 (unless (package-installed-p 'use-package)
-  (package-install 'use-pacakge))
+  (package-install 'use-package))
 
 (require 'use-package)
-(setq use-package-alwasy-ensure t)
+(setq use-package-always-ensure t)
 
 ;;
 ;; end package repo management
@@ -145,6 +145,51 @@
 
 ;;
 ;; end look and feel
+;;
+
+;;
+;; prog modes
+;;
+
+(use-package typescript-mode
+  :ensure t
+  :mode "\\.ts\\'"
+  :config
+  (setq typescript-indent-level 2))
+
+(use-package ng2-mode
+  :ensure t
+  :config
+  ;; Associate ng2-mode with Angular component files
+  (add-to-list 'auto-mode-alist '("\\.component\\.ts\\'" . ng2-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.component\\.html\\'" . ng2-html-mode))
+  (add-to-list 'auto-mode-alist '("\\.service\\.ts\\'" . ng2-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.module\\.ts\\'" . ng2-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.directive\\.ts\\'" . ng2-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.pipe\\.ts\\'" . ng2-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.guard\\.ts\\'" . ng2-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.resolver\\.ts\\'" . ng2-ts-mode)))
+
+(use-package web-mode
+  :ensure t
+  :mode ("\\.html\\'" "\\.css\\'" "\\.scss\\'")
+  :config
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-enable-auto-pairing t)
+  (setq web-mode-enable-css-colorization t)
+  (setq web-mode-enable-current-element-highlight t))
+
+(use-package json-mode
+  :ensure t
+  :mode "\\.json\\'"
+  :config
+  (setq json-reformat:indent-width 2)
+  (setq js-indent-level 2))
+
+;;
+;; end prog modes
 ;;
 
 (custom-set-variables
