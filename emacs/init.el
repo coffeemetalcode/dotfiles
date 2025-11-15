@@ -1,4 +1,7 @@
-;; package repo management
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; package repo management;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
 			 ("org" . "https://orgmode.org/elpa/")
@@ -14,13 +17,13 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-;;
-;; end package repo management
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; end package repo management ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;
-;; install packages
-;;
+;;;;;;;;;;;;;;;;;;;;;;
+;; install packages ;;
+;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package command-log-mode
   :ensure t)
@@ -39,9 +42,6 @@
   :ensure t
   :init (doom-modeline-mode 1)
   :custom ((doom-modeline-height 35)))
-
-(use-package all-the-icons
-  :ensure t)
 
 (use-package rainbow-delimiters
   :ensure t
@@ -100,7 +100,9 @@
 
 (use-package magit
   :ensure t
-  :custom (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+  :custom
+  (magit-display-buffer-function
+   #'magit-display-buffer-same-window-except-diff-v1))
 
 (use-package treemacs
   :ensure t
@@ -115,50 +117,105 @@
 (use-package atom-one-dark-theme
   :ensure t)
 
-;;
-;; end install packages
-;;
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize))
 
-;;
-;; look and feel
-;;
+;; ligatures for fira code
+;; instructions: https://github.com/tonsky/FiraCode/wiki/Emacs-instructions
+;; requires Fira Code Symbol font in addition to Fira Code Regular
+(use-package fira-code-mode
+  :ensure t
+  :hook prog-mode)
+
+;; nerd icons
+(use-package nerd-icons
+  :ensure t)
+
+;; nerd icons for treemacs
+(use-package treemacs-nerd-icons
+  :ensure t
+  :config
+  (treemacs-nerd-icons-config))
+
+;; github copilot
+(use-package copilot
+  :vc (:url "https://github.com/copilot-emacs/copilot.el"
+            :rev :newest
+            :branch "main"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; end install packages ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;
+;; look and feel ;;
+;;;;;;;;;;;;;;;;;;;
 
 (menu-bar-mode -1)    ;; supress menubar (i.e. 'File', 'Edit', etc.)
 (scroll-bar-mode -1)  ;; disable vertical scroll bars
 (setq visible-bell t) ;; set visual bell
+(setopt display-fill-column-indicator-column 80) ;; set line at 80 chars
+(add-hook 'prog-mode-hook #'display-fill-column-indicator-mode) ;; and display
 (set-face-attribute 'default nil
-		    :font "FiraCode Nerd Font Light"
+		    :font "Fira Code Nerd Font Medium"
+;;		    :font "Ubuntu Mono Ligaturized"
 		    :height 115)
-(electric-pair-mode t)
+(electric-pair-mode t) ;; automatically close brackets
 (load-theme 'atom-one-dark t)
-(column-number-mode)
-(global-display-line-numbers-mode 1)
-(setq-default truncate-lines t)
-(dolist (mode '(org-mode-hook
-		term-mode-hook
-		eshell-mode-hook
-		shell-mode-hook
-		treemacs-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
-(command-log-mode 1)
+(column-number-mode) ;; what does this do?
+(global-display-line-numbers-mode 0) ;; line numbers managed in prog-mode-hook
+(setq-default truncate-lines t) ;; don't wrap lines
+(command-log-mode 1) ;; to see, do M-x clm/toggle-command-line-buffer
 (setq warning-minimum-level :error)
+(setq doom-modeline-buffer-file-name-style 'relative-to-project)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
-;;
-;; end look and feel
-;;
+;;;;;;;;;;;;;;;;;;;;;;;
+;; end look and feel ;;
+;;;;;;;;;;;;;;;;;;;;;;;
 
-;;
-;; prog modes
-;;
+;;;;;;;;;;;;;;
+;; lsp mode ;;
+;;;;;;;;;;;;;;
+
+(use-package lsp-mode
+  :ensure t
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . efs/lsp-mode-setup)
+  :init
+  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+  :config
+  (lsp-enable-which-key-integration t))
+
+;;;;;;;;;;;;;;;;;;
+;; end lsp mode ;;
+;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;
+;; prog modes ;;
+;;;;;;;;;;;;;;;;
+
+;; treemacs
+
+(use-package lsp-treemacs
+  :ensure t)
+
+(desktop-save-mode 1) ;; save the current desktop, including treemacs state
+
+;; typescript
 
 (use-package typescript-mode
   :ensure t
   :mode "\\.ts\\'"
+  :hook (typescript-mode . lsp-deferred)
   :config
   (setq typescript-indent-level 2))
 
 (use-package ng2-mode
   :ensure t
+  :hook (ng2-mode . lsp-deferred)
   :config
   ;; Associate ng2-mode with Angular component files
   (add-to-list 'auto-mode-alist '("\\.component\\.ts\\'" . ng2-ts-mode))
@@ -172,6 +229,7 @@
 
 (use-package web-mode
   :ensure t
+  :hook (web-mode . lsp-deferred)
   :mode ("\\.html\\'" "\\.css\\'" "\\.scss\\'")
   :config
   (setq web-mode-markup-indent-offset 2)
@@ -183,22 +241,24 @@
 
 (use-package json-mode
   :ensure t
+  :hook (json-mod . lsp-deferred)
   :mode "\\.json\\'"
   :config
   (setq json-reformat:indent-width 2)
   (setq js-indent-level 2))
 
-;;
-;; end prog modes
-;;
+;;;;;;;;;;;;;;;;;;;;
+;; end prog modes ;;
+;;;;;;;;;;;;;;;;;;;;
+
+;; below is auto-generated and auto-updated by emacs
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(atom-one-dark-theme atom-one-dark all-the-icons treemacs magit counsel-projectile projectile company helpful ivy-rich which-key rainbow-delimiters doom-modeline doom-themes counsel command-log-mode)))
+ '(package-selected-packages nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
