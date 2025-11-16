@@ -122,9 +122,13 @@
 ;; ligatures for fira code
 ;; instructions: https://github.com/tonsky/FiraCode/wiki/Emacs-instructions
 ;; requires Fira Code Symbol font in addition to Fira Code Regular
-;; (use-package fira-code-mode
-;;   :ensure t
-;;   :hook prog-mode)
+(use-package fira-code-mode
+  :ensure t
+  :if (display-graphic-p)
+  :custom
+  ;; some ligatures are the opposite of helpful
+  (fira-code-mode-disabled-ligatures '("[]"))
+  :hook prog-mode)
 
 ;; nerd icons
 (use-package nerd-icons
@@ -179,14 +183,6 @@
 (setq doom-modeline-buffer-file-name-style 'relative-from-project)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
-(use-package fira-code-mode
-  :ensure t
-  :if (display-graphic-p)
-  :custom
-  ;; some ligatures are the opposite of helpful
-  (fira-code-mode-disabled-ligatures '("[]"))
-  :hook prog-mode)
-
 (set-face-attribute 'treemacs-window-background-face nil
 		    :family "Nunito Medium"
 		    :height 115)
@@ -223,14 +219,11 @@
 ;;;;;;;;;;;;;;;;
 
 ;; treemacs
-
 (use-package lsp-treemacs
   :ensure t)
-
 (desktop-save-mode 1) ;; save the current desktop, including treemacs state
 
 ;; typescript
-
 (use-package typescript-mode
   :ensure t
   :mode "\\.ts\\'"
@@ -238,6 +231,7 @@
   :config
   (setq typescript-indent-level 2))
 
+;; angular typescript
 (use-package ng2-mode
   :ensure t
   :hook (ng2-mode . lsp-deferred)
@@ -252,6 +246,7 @@
   (add-to-list 'auto-mode-alist '("\\.guard\\.ts\\'" . ng2-ts-mode))
   (add-to-list 'auto-mode-alist '("\\.resolver\\.ts\\'" . ng2-ts-mode)))
 
+;; html and css
 (use-package web-mode
   :ensure t
   :hook (web-mode . lsp-deferred)
@@ -264,6 +259,7 @@
   (setq web-mode-enable-css-colorization t)
   (setq web-mode-enable-current-element-highlight t))
 
+;; json
 (use-package json-mode
   :ensure t
   :hook (json-mod . lsp-deferred)
@@ -277,7 +273,6 @@
 ;;;;;;;;;;;;;;;;;;;;
 
 ;; below is auto-generated and auto-updated by emacs
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -292,8 +287,8 @@
 			 exec-path-from-shell fira-code-mode flycheck
 			 helpful indent-bars ivy-rich json-mode
 			 lsp-treemacs lsp-ui magit minimap ng2-mode
-			 rainbow-delimiters treemacs-nerd-icons
-			 web-mode which-key)))
+			 rainbow-delimiters spacious-padding
+			 treemacs-nerd-icons web-mode which-key)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
