@@ -114,9 +114,6 @@
   :config
   (setq treemacs-is-never-other-window t))
 
-(use-package atom-one-dark-theme
-  :ensure t)
-
 (use-package exec-path-from-shell
   :ensure t
   :config
@@ -125,9 +122,9 @@
 ;; ligatures for fira code
 ;; instructions: https://github.com/tonsky/FiraCode/wiki/Emacs-instructions
 ;; requires Fira Code Symbol font in addition to Fira Code Regular
-(use-package fira-code-mode
-  :ensure t
-  :hook prog-mode)
+;; (use-package fira-code-mode
+;;   :ensure t
+;;   :hook prog-mode)
 
 ;; nerd icons
 (use-package nerd-icons
@@ -145,6 +142,16 @@
             :rev :newest
             :branch "main"))
 
+(use-package indent-bars
+  :ensure t
+  :hook ((emacs-lisp-mode
+	  markdown-mode
+	  typescript-mode
+	  ng2-mode
+	  web-mode
+	  json-mode
+	  js2-mode) . indent-bars-mode))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; end install packages ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -153,24 +160,41 @@
 ;; look and feel ;;
 ;;;;;;;;;;;;;;;;;;;
 
-(menu-bar-mode -1)    ;; supress menubar (i.e. 'File', 'Edit', etc.)
+;; (menu-bar-mode -1)    ;; supress menubar (i.e. 'File', 'Edit', etc.)
+(tool-bar-mode -1)    ;; supress toolbar (i.e. 'New File', 'Cut', etc.)
 (scroll-bar-mode -1)  ;; disable vertical scroll bars
 (setq visible-bell t) ;; set visual bell
 (setopt display-fill-column-indicator-column 80) ;; set line at 80 chars
 (add-hook 'prog-mode-hook #'display-fill-column-indicator-mode) ;; and display
 (set-face-attribute 'default nil
-		    :font "Fira Code Nerd Font Medium"
-;;		    :font "Ubuntu Mono Ligaturized"
+		    :font "Fira Code Retina"
 		    :height 115)
 (electric-pair-mode t) ;; automatically close brackets
-(load-theme 'atom-one-dark t)
+(load-theme 'doom-one t)
 (column-number-mode) ;; what does this do?
 (global-display-line-numbers-mode 0) ;; line numbers managed in prog-mode-hook
 (setq-default truncate-lines t) ;; don't wrap lines
 (command-log-mode 1) ;; to see, do M-x clm/toggle-command-line-buffer
 (setq warning-minimum-level :error)
-(setq doom-modeline-buffer-file-name-style 'relative-to-project)
+(setq doom-modeline-buffer-file-name-style 'relative-from-project)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+
+(use-package fira-code-mode
+  :ensure t
+  :if (display-graphic-p)
+  :custom
+  ;; some ligatures are the opposite of helpful
+  (fira-code-mode-disabled-ligatures '("[]"))
+  :hook prog-mode)
+
+(set-face-attribute 'treemacs-window-background-face nil
+		    :family "Nunito Medium"
+		    :height 115)
+(treemacs-indent-guide-mode)
+(with-eval-after-load 'treemacs
+  (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action))
+
+(global-tab-line-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; end look and feel ;;
@@ -186,6 +210,7 @@
   :hook (lsp-mode . efs/lsp-mode-setup)
   :init
   (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+  (setq lsp-headerline-breadcrumb-enable nil)
   :config
   (lsp-enable-which-key-integration t))
 
@@ -258,7 +283,17 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages nil))
+ '(custom-safe-themes
+   '("22a0d47fe2e6159e2f15449fcb90bbf2fe1940b185ff143995cc604ead1ea171"
+     default))
+ '(package-selected-packages
+   '(atom-one-dark-theme command-log-mode company copilot copilot-chat
+			 counsel-projectile doom-modeline doom-themes
+			 exec-path-from-shell fira-code-mode flycheck
+			 helpful indent-bars ivy-rich json-mode
+			 lsp-treemacs lsp-ui magit minimap ng2-mode
+			 rainbow-delimiters treemacs-nerd-icons
+			 web-mode which-key)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
