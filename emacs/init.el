@@ -92,6 +92,7 @@
   (when (file-directory-p "~/Workspace/coffeemetalcode")
     (setq projectile-project-search-path '("~/Workspace/coffeemetalcode")))
   (setq projectile-switch-project-action #'projectile-dired))
+;;  (add-to-list 'projectile-globally-ignored-directories "node_modules")
 
 (use-package counsel-projectile
   :ensure t
@@ -103,6 +104,11 @@
   :custom
   (magit-display-buffer-function
    #'magit-display-buffer-same-window-except-diff-v1))
+
+(with-eval-after-load 'magit-mode
+  (add-hook
+   'after-save-hook
+   'magit-after-save-refresh-status t))
 
 (use-package treemacs
   :ensure t
@@ -146,6 +152,8 @@
             :rev :newest
             :branch "main"))
 
+
+
 (use-package indent-bars
   :ensure t
   :hook ((emacs-lisp-mode
@@ -171,8 +179,8 @@
 (setopt display-fill-column-indicator-column 80) ;; set line at 80 chars
 (add-hook 'prog-mode-hook #'display-fill-column-indicator-mode) ;; and display
 (set-face-attribute 'default nil
-		    :font "Fira Code Retina"
-		    :height 115)
+		    :font "Fira Code Medium"
+		    :height 100)
 (electric-pair-mode t) ;; automatically close brackets
 (load-theme 'doom-one t)
 (column-number-mode) ;; what does this do?
@@ -185,12 +193,19 @@
 
 (set-face-attribute 'treemacs-window-background-face nil
 		    :family "Nunito Medium"
-		    :height 115)
+		    :height 100)
 (treemacs-indent-guide-mode)
 (with-eval-after-load 'treemacs
   (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action))
 
-(global-tab-line-mode)
+;; buffer tabs
+(global-tab-line-mode 1)
+;; detect when buffers are changed via a process (like 'git pull' or 'npm i')
+(global-auto-revert-mode 1)
+;; detect when git status changes
+(magit-auto-revert-mode 1)
+;; don't make backup files i.e. 'file~'
+(setq make-backup-files nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; end look and feel ;;
@@ -284,9 +299,10 @@
  '(package-selected-packages
    '(atom-one-dark-theme command-log-mode company copilot copilot-chat
 			 counsel-projectile doom-modeline doom-themes
-			 exec-path-from-shell fira-code-mode flycheck
-			 helpful indent-bars ivy-rich json-mode
-			 lsp-treemacs lsp-ui magit minimap ng2-mode
+			 emmet-mode exec-path-from-shell
+			 fira-code-mode flycheck helpful indent-bars
+			 ivy-rich json-mode lsp-treemacs lsp-ui magit
+			 minimap ng2-mode projectile-ripgrep
 			 rainbow-delimiters spacious-padding
 			 treemacs-nerd-icons web-mode which-key)))
 (custom-set-faces
