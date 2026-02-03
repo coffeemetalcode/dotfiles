@@ -33,8 +33,6 @@
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
 (setq doom-theme 'doom-one)
-(setq doom-font (font-spec :family "Fira Code" :size 15))
-(setq doom-modeline-height '35)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -44,30 +42,11 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
-(use-package! rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
+(setq doom-modeline-height 35)
+(setq doom-modeline-buffer-file-name-style 'file-name)
 
-;; (setq doom-variable-pitch-font (font-spec :family "Noto Sans" :size 10))
-
-(after! centaur-tabs
-  (centaur-tabs-change-fonts "Noto Sans" 110)
-  (setq centaur-tabs-height 48))
-
-(after! treemacs
-  (set-face-attribute 'treemacs-file-face 'nil :family "Noto Sans" :height 110)
-  (set-face-attribute 'treemacs-directory-face 'nil :family "Noto Sans" :height 110)
-  (set-face-attribute 'treemacs-root-face 'nil :family "Noto Sans" :height 110)
-  (set-face-attribute 'treemacs-window-background-face 'nil :family "Noto Sans" :height 110)
-  (treemacs-indent-guide-mode)
-  (setq treemacs-is-never-other-window t))
-
-;; (setq doom-themes-treemacs-enable-variable-pitch nil)
-
-(use-package! markdown-mode)
-
-(use-package! copilot
-  :hook (prog-mode . copilot-mode))
-
+(setq frame-title-format '("%b – " (:eval
+                                    (projectile-project-name)) " – Doom Emacs"))
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
@@ -99,3 +78,125 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+
+(setq-default tab-width 2)
+(setq-default indent-tabs-mode nil) ;; use spaces instead of tabs
+
+(setq-default fill-column 80)
+(global-display-fill-column-indicator-mode t)
+
+(setq doom-font (font-spec
+                 :family "Fira Code"
+                 :size 15)
+      doom-variable-pitch-font (font-spec
+                                :family "Lato"
+                                :size 15))
+
+(use-package! rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :config
+  ;; indentation settings
+  (add-to-list 'copilot-indentation-alist '(prog-mode 2))
+  (add-to-list 'copilot-indentation-alist '(org-mode 2))
+  (add-to-list 'copilot-indentation-alist '(text-mode 2))
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+  :bind (:map copilot-completion-map
+         ("<tab>" . 'copilot-accept-completion)
+         ("TAB" . 'copilot-accept-completion)
+         ("<backtab>" . 'copilot-clear-overlay)
+         ("C-<tab>" . 'copilot-accept-completion-by-word)
+         ("C-TAB" . 'copilot-accept-completion-by-word)))
+
+(use-package! highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :config
+  (setq highlight-indent-guides-method 'fill
+        highlight-indent-guides-responsive 'stack
+        highlight-indent-guides-auto-enabled t
+        ;; highlight-indent-guides-auto-odd-face-perc 80
+        ;; highlight-indent-guides-auto-even-face-perc 100
+        ;; highlight-indent-guides-character ?\┊
+        highlight-indent-guides-delay 0.1))
+  ;; (set-face-background 'highlight-indent-guides-odd-face "dimgray")
+  ;; (set-face-background 'highlight-indent-guides-even-face "dimgray"))
+
+;; (use-package! copilot-chat
+;;   :after copilot
+;;   :config
+;;   ;; Optional: set keybindings
+;;   (define-key copilot-chat-mode-map (kbd "C-c C-c") #'copilot-chat-submit)
+;;   (define-key copilot-chat-mode-map (kbd "C-c C-k") #'copilot-chat-clear-buffer)
+;;   (define-key prog-mode-hook (kbd "C-c h") #'copilot-chat-display)) ;; Example keybinding to open chat
+
+;; (use-package! move-text)
+
+;; (use-package! drag-stuff
+;;   :defer t
+;;   :init
+;;   (map! "M-<up>"    #'drag-stuff-up
+;;         "M-<down>"  #'drag-stuff-down
+;;         "M-<left>"  #'drag-stuff-left
+;;         "M-<right>" #'drag-stuff-right))
+
+(after! lsp-mode
+  (setq lsp-headerline-breadcrumb-enable t)
+  ;; Optional: customize which segments to display (project, file, symbols)
+  (setq lsp-headerline-breadcrumb-segments '(project file symbols))
+  ;; Optional: enable icons (requires all-the-icons package)
+  (setq lsp-headerline-breadcrumb-icons-enable t))
+
+(after! centaur-tabs
+  (centaur-tabs-change-fonts "Lato" 110)
+  (setq centaur-tabs-height 48
+        centaur-tabs-style "wave"
+        centaur-tabs-show-navigation-buttons t
+        centaur-tabs-set-modified-marker t
+        centaur-tabs-modified-marker "●"))
+
+;; (after! treemacs
+;;   (set-face-attribute 'treemacs-root-face
+;;                       nil
+;;                       :family "Lato"
+;;                       :height 125)
+;;   (set-face-attribute 'treemacs-file-face
+;;                       nil
+;;                       :family "Lato"
+;;                       :height 110)
+;;   (set-face-attribute 'treemacs-directory-face
+;;                       nil
+;;                       :family "Lato"
+;;                       :height 110))
+
+(after! treemacs
+  (setq doom-themes-treemacs-enable-variable-pitch t)
+  ;; Ensure ALL treemacs faces use variable-pitch font
+  (dolist (face '(treemacs-root-face
+                  treemacs-git-unmodified-face
+                  treemacs-git-modified-face
+                  treemacs-git-renamed-face
+                  treemacs-git-ignored-face
+                  treemacs-git-untracked-face
+                  treemacs-git-added-face
+                  treemacs-git-conflict-face
+                  treemacs-directory-face
+                  treemacs-directory-collapsed-face
+                  treemacs-file-face
+                  treemacs-tags-face
+                  ;; treemacs-header-face
+                  ;; treemacs-help-button-face
+                  treemacs-on-failure-pulse-face))
+    (set-face-attribute face nil :family "Lato" :height 110)))
+
+(custom-set-variables
+ '(ediff-split-window-function (quote split-window-horizontally)))
+
+;; Open treemacs and dired buffers on startup
+;; Added by Windsurf - this didn't work
+;; (add-hook! 'doom-init-ui-hook
+;;   (defun +open-default-buffers-h ()
+;;     "Open treemacs and dired buffers on startup."
+;;     (treemacs)
+;;     (dired "~/")))

@@ -53,18 +53,19 @@
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;; (unpin! t)
 
-(package! tldr)
-
 (package! rainbow-delimiters)
 
-(package! grip-mode)
-
-(package! markdown-mode)
-
-;;(package! markdown)
-
-;; github copilot
 (package! copilot
   :recipe (:host github
            :repo "copilot-emacs/copilot.el"
            :branch "main"))
+
+(package! highlight-indent-guides
+  :recipe (:host github
+           :repo "DarthFennec/highlight-indent-guides"
+           :branch "master"))
+;; (package! copilot-chat)
+
+;; (package! drag-stuff)
+;;
+;; (package! move-text)
