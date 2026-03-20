@@ -56,16 +56,16 @@
 (package! rainbow-delimiters)
 
 (package! copilot
-  :recipe (:host github
-           :repo "copilot-emacs/copilot.el"
-           :branch "main"))
+  :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
+
+(package! copilot-chat
+  :recipe (:host github :repo "chep/copilot-chat.el" :files ("*.el")))
 
 (package! highlight-indent-guides
   :recipe (:host github
            :repo "DarthFennec/highlight-indent-guides"
            :branch "master"))
-;; (package! copilot-chat)
 
-;; (package! drag-stuff)
-;;
-;; (package! move-text)
+;; (package! sly)
+
+(package! drag-stuff)

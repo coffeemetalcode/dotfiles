@@ -1,4 +1,17 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
+(setenv "NPM_PACKAGES" "$HOME/.nvm/versions/node/v22.16.0/bin")
+(add-to-list 'exec-path "$HOME/.nvm/versions/node/v22.16.0/bin")
+
+;; Optional: Manual command configuration if auto-detection fails
+(setq lsp-clients-angular-language-server-command
+      '("node" "~/.npm-packages/lib/node_modules/@angular/language-server"
+        "--ngProbeLocations" "~/.npm-packages/lib/node_modules"
+        "--tsProbeLocations" "~/.npm-packages/lib/node_modules"
+        "--stdio"))
+
+(setq confirm-kill-emacs #'yes-or-no-p) ;; Force confirmation prompt when exiting Emacs
+
+(server-start) ;; Start the Emacs server for emacsclient support
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
@@ -47,6 +60,7 @@
 
 (setq frame-title-format '("%b – " (:eval
                                     (projectile-project-name)) " – Doom Emacs"))
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
@@ -74,16 +88,47 @@
 ;; the highlighted symbol at press 'K' (non-evil users must press 'C-c c k').
 ;; This will open documentation for it, including demos of how they are used.
 ;; Alternatively, use `C-h o' to look up a symbol (functions, variables, faces,
-;; etc).
+;; etc).i
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-(setq-default tab-width 2)
-(setq-default indent-tabs-mode nil) ;; use spaces instead of tabs
+;; Automatically trigger Lilypond Mode for Lilypond files
+(load "lilypond-init.el")
+(add-to-list 'auto-mode-alist '("\\.ly\\'" . LilyPond-mode)) ;; <- Windusrf wrote this
+
+(add-hook! prog-mode
+  (setq tab-width 2 ;; default tab indent
+        c-basic-offset 4 ;; C/C++/Java indent
+        indent-tabs-mode nil)) ;; use spaces instead of tabs
+
+(after! web-mode
+  (setq web-mode-markup-indent-offset 2
+        web-mode-css-indent-offset 2
+        css-indent-offset 2
+        web-mode-code-indent-offset 2
+        web-mode-indent-style 2
+        html-indent-offset 2
+        sgml-basic-offset 2)
+  (set (make-local-variable 'tab-width) 2)
+  (set (make-local-variable 'indent-tabs-mode) nil))
+
+(after! html-mode
+  (setq sgml-basic-offset 2
+        html-indent-offset 2)
+  (set (make-local-variable 'tab-width) 2)
+  (set (make-local-variable 'indent-tabs-mode) nil))
+
+(after! css-mode
+  (setq css-indent-offset 2))
 
 (setq-default fill-column 80)
 (global-display-fill-column-indicator-mode t)
+
+;; Make window dividers wider for easier mouse grabbing
+(setq window-divider-default-places t
+      window-divider-default-bottom-width 2
+      window-divider-default-right-width 2)
 
 (setq doom-font (font-spec
                  :family "Fira Code"
@@ -97,18 +142,24 @@
 
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("C-c C-k" . 'copilot-clear-overlay)
+              ("<tab>" . 'copilot-accept-completion)
+              ("TAB" . 'copilot-accept-completion)
+              ("C-TAB" . 'copilot-accept-completion-by-word)
+              ("C-<tab>" . 'copilot-accept-completion-by-word)
+              ("C-n" . 'copilot-next-completion)
+              ("C-p" . 'copilot-previous-completion))
+
   :config
-  ;; indentation settings
   (add-to-list 'copilot-indentation-alist '(prog-mode 2))
   (add-to-list 'copilot-indentation-alist '(org-mode 2))
   (add-to-list 'copilot-indentation-alist '(text-mode 2))
+  (add-to-list 'copilot-indentation-alist '(clojure-mode 2))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
-  :bind (:map copilot-completion-map
-         ("<tab>" . 'copilot-accept-completion)
-         ("TAB" . 'copilot-accept-completion)
-         ("<backtab>" . 'copilot-clear-overlay)
-         ("C-<tab>" . 'copilot-accept-completion-by-word)
-         ("C-TAB" . 'copilot-accept-completion-by-word)))
+  (add-to-list 'copilot-indentation-alist '(lisp-interaction-mode 2))
+  (add-to-list 'copilot-indentation-alist '(common-lisp-mode 2))
+  (add-to-list 'copilot-indentation-alist '(lisp-mode)))
 
 (use-package! highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
@@ -116,30 +167,27 @@
   (setq highlight-indent-guides-method 'fill
         highlight-indent-guides-responsive 'stack
         highlight-indent-guides-auto-enabled t
-        ;; highlight-indent-guides-auto-odd-face-perc 80
-        ;; highlight-indent-guides-auto-even-face-perc 100
-        ;; highlight-indent-guides-character ?\┊
         highlight-indent-guides-delay 0.1))
-  ;; (set-face-background 'highlight-indent-guides-odd-face "dimgray")
-  ;; (set-face-background 'highlight-indent-guides-even-face "dimgray"))
 
-;; (use-package! copilot-chat
-;;   :after copilot
-;;   :config
-;;   ;; Optional: set keybindings
-;;   (define-key copilot-chat-mode-map (kbd "C-c C-c") #'copilot-chat-submit)
-;;   (define-key copilot-chat-mode-map (kbd "C-c C-k") #'copilot-chat-clear-buffer)
-;;   (define-key prog-mode-hook (kbd "C-c h") #'copilot-chat-display)) ;; Example keybinding to open chat
+(use-package! copilot-chat
+  :after copilot
+  (request org markdown-mode))
 
-;; (use-package! move-text)
+(use-package! drag-stuff
+  :defer t
+  :init
+  (map! "M-<up>"    #'drag-stuff-up
+        "M-<down>"  #'drag-stuff-down))
 
-;; (use-package! drag-stuff
-;;   :defer t
-;;   :init
-;;   (map! "M-<up>"    #'drag-stuff-up
-;;         "M-<down>"  #'drag-stuff-down
-;;         "M-<left>"  #'drag-stuff-left
-;;         "M-<right>" #'drag-stuff-right))
+(use-package! lsp-headerline
+  :after lsp-mode
+  :config
+  (setq lsp-headerline-breadcrumb-enable t
+        lsp-headerline-breadcrumb-segments '(project file symbols)
+        lsp-headerline-breadcrumb-icons-enable t))
+
+(after! eglot
+  (add-to-list 'eglot-stay-out-of 'flymake))
 
 (after! lsp-mode
   (setq lsp-headerline-breadcrumb-enable t)
@@ -156,20 +204,6 @@
         centaur-tabs-set-modified-marker t
         centaur-tabs-modified-marker "●"))
 
-;; (after! treemacs
-;;   (set-face-attribute 'treemacs-root-face
-;;                       nil
-;;                       :family "Lato"
-;;                       :height 125)
-;;   (set-face-attribute 'treemacs-file-face
-;;                       nil
-;;                       :family "Lato"
-;;                       :height 110)
-;;   (set-face-attribute 'treemacs-directory-face
-;;                       nil
-;;                       :family "Lato"
-;;                       :height 110))
-
 (after! treemacs
   (setq doom-themes-treemacs-enable-variable-pitch t)
   ;; Ensure ALL treemacs faces use variable-pitch font
@@ -185,18 +219,16 @@
                   treemacs-directory-collapsed-face
                   treemacs-file-face
                   treemacs-tags-face
-                  ;; treemacs-header-face
-                  ;; treemacs-help-button-face
                   treemacs-on-failure-pulse-face))
     (set-face-attribute face nil :family "Lato" :height 110)))
 
 (custom-set-variables
  '(ediff-split-window-function (quote split-window-horizontally)))
 
-;; Open treemacs and dired buffers on startup
-;; Added by Windsurf - this didn't work
-;; (add-hook! 'doom-init-ui-hook
-;;   (defun +open-default-buffers-h ()
-;;     "Open treemacs and dired buffers on startup."
-;;     (treemacs)
-;;     (dired "~/")))
+(after! doom-modeline
+  (setq doom-modeline-check 'full
+        doom-modeline-check-icon t))
+
+(after! flycheck
+  (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
+  (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
