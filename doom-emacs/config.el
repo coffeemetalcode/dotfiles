@@ -232,3 +232,5 @@
 (after! flycheck
   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
   (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
+
+(setq demap-minimap-window-width 15)
