@@ -127,8 +127,8 @@
 
 ;; Make window dividers wider for easier mouse grabbing
 (setq window-divider-default-places t
-      window-divider-default-bottom-width 2
-      window-divider-default-right-width 2)
+      window-divider-default-bottom-width 3
+      window-divider-default-right-width 3)
 
 (setq doom-font (font-spec
                  :family "Fira Code"
@@ -161,6 +161,10 @@
   (add-to-list 'copilot-indentation-alist '(common-lisp-mode 2))
   (add-to-list 'copilot-indentation-alist '(lisp-mode)))
 
+(use-package! copilot-chat
+  :after copilot
+  (request org markdown-mode))
+
 (use-package! highlight-indent-guides
   :hook (prog-mode . highlight-indent-guides-mode)
   :config
@@ -168,10 +172,6 @@
         highlight-indent-guides-responsive 'stack
         highlight-indent-guides-auto-enabled t
         highlight-indent-guides-delay 0.1))
-
-(use-package! copilot-chat
-  :after copilot
-  (request org markdown-mode))
 
 (use-package! drag-stuff
   :defer t
@@ -205,6 +205,7 @@
         centaur-tabs-modified-marker "●"))
 
 (after! treemacs
+  (treemacs-follow-mode 1)
   (setq doom-themes-treemacs-enable-variable-pitch t)
   ;; Ensure ALL treemacs faces use variable-pitch font
   (dolist (face '(treemacs-root-face
