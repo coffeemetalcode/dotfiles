@@ -45,8 +45,8 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-one)
-
+;; (setq doom-theme 'doom-one)
+(setq doom-theme 'doom-tokyo-night)
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
@@ -93,10 +93,6 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-;; Automatically trigger Lilypond Mode for Lilypond files
-(load "lilypond-init.el")
-(add-to-list 'auto-mode-alist '("\\.ly\\'" . LilyPond-mode)) ;; <- Windusrf wrote this
-
 (add-hook! prog-mode
   (setq tab-width 2 ;; default tab indent
         c-basic-offset 4 ;; C/C++/Java indent
@@ -136,6 +132,53 @@
       doom-variable-pitch-font (font-spec
                                 :family "Lato"
                                 :size 15))
+
+;; Automatically trigger Lilypond Mode for Lilypond files
+(add-to-list 'load-path "~/.local/share/applications/lilypond-2.24.4/share/emacs/site-lisp")
+(load "lilypond-init.el")
+(add-to-list 'auto-mode-alist '("\\.ly\\'" . LilyPond-mode))
+(add-to-list 'auto-mode-alist '("\\.ily\\'" . LilyPond-mode))
+
+;; Make LilyPond-mode inherit prog-mode behavior and fix comment indentation
+(defun my/lilypond-indent-line ()
+  "Indent current line, with smarter handling for comment lines."
+  (if (save-excursion
+        (beginning-of-line)
+        (looking-at "^\\s-*%"))  ; Line is a comment
+      ;; For comment lines: indent based on previous line + context
+      (let* ((prev-indent
+              (save-excursion
+                (forward-line -1)
+                (while (and (not (bobp))
+                            (looking-at "^\\s-*$"))  ; Skip blank lines
+                  (forward-line -1))
+                (current-indentation)))
+             (prev-line-opens
+              (save-excursion
+                (forward-line -1)
+                (while (and (not (bobp))
+                            (looking-at "^\\s-*$"))
+                  (forward-line -1))
+                (end-of-line)
+                (skip-chars-backward " \t")
+                (member (char-before) '(?{ ?< ?\())))
+             (target-indent
+              (if prev-line-opens
+                  (+ prev-indent 2)  ; Indent one level after opening brace
+                prev-indent)))
+        (indent-line-to target-indent))
+    ;; For non-comment lines: use LilyPond's default indentation
+    (LilyPond-indent-line)))
+
+(add-hook 'LilyPond-mode-hook
+          (lambda ()
+            (run-hooks 'prog-mode-hook)
+            (setq-local indent-line-function #'my/lilypond-indent-line)
+            ;; Format (indent) buffer on save
+            (add-hook 'before-save-hook
+                      (lambda ()
+                        (indent-region (point-min) (point-max)))
+                      nil t)))
 
 (use-package! rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -206,6 +249,9 @@
 
 (after! treemacs
   (treemacs-follow-mode 1)
+  ;; Prevent treemacs from scrolling on file save
+  (setq treemacs-silent-refresh t
+        treemacs-silent-filewatch t)
   (setq doom-themes-treemacs-enable-variable-pitch t)
   ;; Ensure ALL treemacs faces use variable-pitch font
   (dolist (face '(treemacs-root-face
@@ -225,6 +271,9 @@
 
 (custom-set-variables
  '(ediff-split-window-function (quote split-window-horizontally)))
+
+;; (after! vterm
+;;   (set-popup-rule! "^\\*doom:vterm-popup" :side 'right :size 0.3 :select t :quit nil :ttl 0))
 
 (after! doom-modeline
   (setq doom-modeline-check 'full
