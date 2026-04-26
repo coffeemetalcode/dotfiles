@@ -4,7 +4,7 @@
 
 # /home/coffeemetalcode/.nvm/versions/node/v18.20.5/bin:/home/coffeemetalcode/bin:/home/coffeemetalcode/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 
-export INITIAL_PATH="/home/coffeemetalcode/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+export INITIAL_PATH="/home/coffeemetalcode/.local/bin:/home/coffeemetalcode/.config/emacs/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/coffeemetalcode/.nvm/versions/node/v18.20.5/bin:/home/coffeemetalcode/go/bin"
 
 export PATH=$INITIAL_PATH
 
@@ -107,8 +107,8 @@ source $ZSH/oh-my-zsh.sh
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
+# alias zshconfig="mate $HOME/.zshrc"
+# alias ohmyzsh="mate $HOME/.oh-my-zsh"
 
 # Java Settings
 export JAVA_HOME_11=/usr/lib/jvm/java-11-amazon-corretto
@@ -123,21 +123,37 @@ alias java17='export JAVA_HOME=$JAVA_HOME_17 && export PATH="$JAVA_HOME/bin:$INI
 
 alias java21='export JAVA_HOME=$JAVA_HOME_21 && export PATH="$JAVA_HOME/bin:$INITIAL_PATH"'
 
-java17
+java21
 
 # Node Settings
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
 nvm use
+
+export NODE_HOME="$NVM_DIR/versions/node/$(nvm version)/bin" # this doesn't work
 
 # LilyPond Settings
 export LYINPUTS=/home/coffeemetalcode/.lilypond/ly/
 
-export LILYPOND_DOC_HOME="/usr/share/doc/lilypond/html"
-
+# set path for documentation files
+export LILYPOND_DOC_HOME="$HOME/.local/share/applications/lilypond-2.24.4/share/doc/lilypond/html"
+# and open the docs in chrome
+# TODO: update the alias to use whatever the system browser is, in case I change the default (i.e. to Brave or other)
 alias lydoc="google-chrome-stable $LILYPOND_DOC_HOME/index.html"
+# Invoke the development version of lilypond for testing / experimentation
+alias lilypond-dev="$HOME/Workspace/coffeemetalcode/lilypond/install/bin/lilypond"
+# lilypond \include paths
+# accepst colon separated paths just like $PATH
+# tip: symlink from here to $HOME/Workspace/coffeemetalcode/lilypond-custom files
+# or make a script that updates this with symlinks to new files as needed
+export LILYPOND_INCLUDE_PATH="$HOME/.lilypond/extras/custom"
+# LilyPond doesn't automatically search for this, so pass it to the -I switch
+alias lilypond="lilypond -I $LILYPOND_INCLUDE_PATH"
+
+# LISP Settings
+alias sbcl="rlwrap sbcl"
 
 # Load Angular CLI autocompletion.
 source <(ng completion script)
