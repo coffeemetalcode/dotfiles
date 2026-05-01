@@ -1,6 +1,6 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
-(setenv "NPM_PACKAGES" "$HOME/.nvm/versions/node/v22.16.0/bin")
-(add-to-list 'exec-path "$HOME/.nvm/versions/node/v22.16.0/bin")
+(setenv "NPM_PACKAGES" "$HOME/.nvm/versions/node/v24.15.0/bin")
+(add-to-list 'exec-path "$HOME/.nvm/versions/node/v24.15.0/bin")
 
 ;; Optional: Manual command configuration if auto-detection fails
 (setq lsp-clients-angular-language-server-command
@@ -98,6 +98,13 @@
         c-basic-offset 4 ;; C/C++/Java indent
         indent-tabs-mode nil)) ;; use spaces instead of tabs
 
+(after! lsp-mode
+  (add-to-list 'lsp-language-id-configuration '(angular-html-mode . "html"))
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection '("ngserver" "--stdio"))
+                    :major-modes '(typescript-mode html-mode css-mode scss-mode json-mode)
+                    :server-id 'angular-ls)))
+
 (after! web-mode
   (setq web-mode-markup-indent-offset 2
         web-mode-css-indent-offset 2
@@ -134,7 +141,7 @@
                                 :size 15))
 
 ;; Automatically trigger Lilypond Mode for Lilypond files
-(add-to-list 'load-path "~/.local/share/applications/lilypond-2.24.4/share/emacs/site-lisp")
+(add-to-list 'load-path "~/.local/share/applications/lilypond-2.26.0/share/emacs/site-lisp")
 (load "lilypond-init.el")
 (add-to-list 'auto-mode-alist '("\\.ly\\'" . LilyPond-mode))
 (add-to-list 'auto-mode-alist '("\\.ily\\'" . LilyPond-mode))
