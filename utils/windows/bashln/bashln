@@ -1,0 +1,255 @@
+#!/usr/bin/env bash
+
+# bashln - Create bash-style launchers for Windows executables
+# Usage: bashln <source-file-or-dir> <destination-file-or-dir>
+
+set -e
+
+# Display help
+show_help() {
+    cat << 'HELP'
+bashln - Create bash-style launchers for Windows executables
+
+USAGE:
+    bashln <source-file-or-dir> <destination-file-or-dir>
+    bashln <source-files...> <destination-dir>
+    bashln -h | --help
+
+DESCRIPTION:
+    Creates bash launcher scripts for Windows executables (.exe, .py) or
+    executable files with no extension. Useful for invoking Windows programs
+    from terminal emulators like Mintty, GitBash, CygWin, or WSL.
+
+ARGUMENTS:
+    source-file-or-dir      A single executable file or directory containing
+                            executables. Valid files must have .exe, .py, or
+                            no extension (and be executable).
+    
+    source-files...         Multiple source files (e.g., from wildcard expansion).
+                            When using wildcards like ~/bin/*, the shell expands
+                            them into multiple arguments.
+    
+    destination-file-or-dir Target location for the launcher(s). If source is
+                            a directory or multiple files, destination must be
+                            a directory. If source is a single file, destination
+                            can be a directory or a specific filename.
+
+EXAMPLES:
+    # Create launcher for git.exe in ~/.local/bin/
+    bashln /c/Program\ Files/Git/bin/git.exe ~/.local/bin/
+
+    # Create launcher with custom name
+    bashln /c/Windows/System32/notepad.exe ~/.local/bin/edit
+
+    # Create launchers for all executables in a directory (using wildcard)
+    bashln ~/Apps/lilypond-2.26.0/bin/* ~/.local/bin/
+
+OPTIONS:
+    -h, --help    Show this help message and exit
+
+NOTES:
+    - Launcher names automatically strip .exe and .py extensions
+    - All created launchers are made executable (chmod +x)
+    - Paths with spaces are handled correctly in the generated launchers
+    - Wildcards (like *) are expanded by the shell before passing to bashln
+
+HELP
+}
+
+# Function to check if a file has a valid extension or no extension
+is_valid_file() {
+    local file="$1"
+    local basename="${file##*/}"
+    
+    # Check if file has no extension
+    if [[ "$basename" != *.* ]]; then
+        # For files with no extension, check if executable
+        if [[ -x "$file" ]]; then
+            return 0
+        fi
+        return 1
+    fi
+    
+    # Check for .exe or .py extension
+    if [[ "$file" == *.exe || "$file" == *.py ]]; then
+        return 0
+    fi
+    
+    return 1
+}
+
+# Function to get the launcher name (strip extension)
+get_launcher_name() {
+    local file="$1"
+    local basename="${file##*/}"
+    
+    # Remove extension if present
+    if [[ "$basename" == *.exe || "$basename" == *.py ]]; then
+        echo "${basename%.*}"
+    else
+        echo "$basename"
+    fi
+}
+
+# Function to create a launcher script
+create_launcher() {
+    local source_path="$1"
+    local dest_path="$2"
+    
+    # Convert path for exec line (remove escapes, will be quoted)
+    local exec_path="${source_path//\\ / }"
+    
+    # Create the launcher script
+    cat > "$dest_path" << 'EOF'
+#!/usr/bin/env bash
+EOF
+    
+    echo "# Launcher for $exec_path" >> "$dest_path"
+    echo "exec \"$exec_path\" \"\$@\"" >> "$dest_path"
+    
+    # Make executable
+    chmod +x "$dest_path"
+    
+    echo "Created launcher: $dest_path"
+}
+
+# Check for help flag
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+# Check arguments
+if [[ $# -lt 2 ]]; then
+    echo "Error: Expected at least 2 arguments" >&2
+    echo "Usage: bashln <source-file-or-dir> <destination-file-or-dir>" >&2
+    echo "Try 'bashln --help' for more information." >&2
+    exit 1
+fi
+
+# Last argument is always the destination
+DEST="${@: -1}"
+
+# If only 2 arguments, handle as before (single source)
+if [[ $# -eq 2 ]]; then
+    SOURCE="$1"
+    
+    # Check if source exists
+    if [[ ! -e "$SOURCE" ]]; then
+        echo "Error: Source '$SOURCE' does not exist" >&2
+        exit 1
+    fi
+else
+    # Multiple source files (from wildcard expansion)
+    # Destination must be a directory
+    if [[ ! -d "$DEST" ]]; then
+        if [[ -e "$DEST" ]]; then
+            echo "Error: When multiple source files are provided, destination must be a directory, not a file" >&2
+            exit 1
+        else
+            echo "Error: Destination directory '$DEST' does not exist" >&2
+            exit 1
+        fi
+    fi
+    
+    # Process all source files except the last argument (which is destination)
+    found_files=()
+    for ((i=1; i<$#; i++)); do
+        file="${!i}"
+        if [[ ! -e "$file" ]]; then
+            echo "Warning: Skipping non-existent file '$file'" >&2
+            continue
+        fi
+        if [[ -f "$file" ]] && is_valid_file "$file"; then
+            found_files+=("$file")
+        fi
+    done
+    
+    # Check if any valid files were found
+    if [[ ${#found_files[@]} -eq 0 ]]; then
+        echo "Error: No valid executable files (.exe, .py, or executable with no extension) found" >&2
+        exit 1
+    fi
+    
+    # Create launchers for all found files
+    for file in "${found_files[@]}"; do
+        launcher_name=$(get_launcher_name "$file")
+        dest_file="$DEST/$launcher_name"
+        create_launcher "$file" "$dest_file"
+    done
+    
+    echo "Created ${#found_files[@]} launcher(s) in $DEST"
+    exit 0
+fi
+
+# Single source argument - check if source exists
+if [[ ! -e "$SOURCE" ]]; then
+    echo "Error: Source '$SOURCE' does not exist" >&2
+    exit 1
+fi
+
+# Handle single file
+if [[ -f "$SOURCE" ]]; then
+    # Validate file extension
+    if ! is_valid_file "$SOURCE"; then
+        echo "Error: Source file must have extension .exe, .py, or no extension (and be executable)" >&2
+        exit 1
+    fi
+    
+    # Determine destination path
+    if [[ -d "$DEST" ]]; then
+        # Destination is a directory, create launcher with stripped name
+        launcher_name=$(get_launcher_name "$SOURCE")
+        dest_file="$DEST/$launcher_name"
+    else
+        # Destination is a specific filename
+        dest_file="$DEST"
+        # Create parent directory if needed
+        dest_dir="${dest_file%/*}"
+        if [[ "$dest_dir" != "$dest_file" && ! -d "$dest_dir" ]]; then
+            mkdir -p "$dest_dir"
+        fi
+    fi
+    
+    create_launcher "$SOURCE" "$dest_file"
+    
+# Handle directory
+elif [[ -d "$SOURCE" ]]; then
+    # Destination must be a directory
+    if [[ ! -d "$DEST" ]]; then
+        if [[ -e "$DEST" ]]; then
+            echo "Error: When source is a directory, destination must also be a directory, not a file" >&2
+            exit 1
+        else
+            echo "Error: Destination directory '$DEST' does not exist" >&2
+            exit 1
+        fi
+    fi
+    
+    # Find all valid files
+    found_files=()
+    
+    for file in "$SOURCE"/*; do
+        if [[ -f "$file" ]] && is_valid_file "$file"; then
+            found_files+=("$file")
+        fi
+    done
+    
+    # Check if any files were found
+    if [[ ${#found_files[@]} -eq 0 ]]; then
+        echo "Error: No valid executable files (.exe, .py, or executable with no extension) found in '$SOURCE'" >&2
+        exit 1
+    fi
+    
+    # Create launchers for all found files
+    for file in "${found_files[@]}"; do
+        launcher_name=$(get_launcher_name "$file")
+        dest_file="$DEST/$launcher_name"
+        create_launcher "$file" "$dest_file"
+    done
+    
+    echo "Created ${#found_files[@]} launcher(s) in $DEST"
+else
+    echo "Error: Source must be a file or directory" >&2
+    exit 1
+fi

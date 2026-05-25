@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Example of a bash-style launcher for Windows / Mintty / GitBash
+exec "/c/Program Files/Git/bin/git.exe" "$@"
