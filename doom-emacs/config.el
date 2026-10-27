@@ -1,3 +1,7 @@
+;; https://github.com/xenodium/agent-shell#doom-emacs
+(require 'acp)
+(require 'agent-shell)
+
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 (setenv "NPM_PACKAGES" "$HOME/.nvm/versions/node/v24.15.0/bin")
 (add-to-list 'exec-path "$HOME/.nvm/versions/node/v24.15.0/bin")
@@ -135,7 +139,8 @@
 
 (setq doom-font (font-spec
                  :family "Fira Code"
-                 :size 15)
+                 :size 15
+                 :weight 'extra-light)
       doom-variable-pitch-font (font-spec
                                 :family "Lato"
                                 :size 15))
@@ -143,10 +148,10 @@
 ;; Automatically trigger Lilypond Mode for Lilypond files
 (add-to-list 'load-path "~/.local/share/applications/lilypond-2.26.0/share/emacs/site-lisp")
 (load "lilypond-init.el")
-(add-to-list 'auto-mode-alist '("\\.ly\\'" . LilyPond-mode))
-(add-to-list 'auto-mode-alist '("\\.ily\\'" . LilyPond-mode))
+(add-to-list 'auto-mode-alist '("\\.ly\\'" . lilypond-mode))
+(add-to-list 'auto-mode-alist '("\\.ily\\'" . lilypond-mode))
 
-;; Make LilyPond-mode inherit prog-mode behavior and fix comment indentation
+;; Make lilypond-mode inherit prog-mode behavior and fix comment indentation
 (defun my/lilypond-indent-line ()
   "Indent current line, with smarter handling for comment lines."
   (if (save-excursion
@@ -177,7 +182,7 @@
     ;; For non-comment lines: use LilyPond's default indentation
     (LilyPond-indent-line)))
 
-(add-hook 'LilyPond-mode-hook
+(add-hook 'lilypond-mode-hook
           (lambda ()
             (run-hooks 'prog-mode-hook)
             (setq-local indent-line-function #'my/lilypond-indent-line)
@@ -215,13 +220,18 @@
   :after copilot
   (request org markdown-mode))
 
-(use-package! highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
+(use-package! indent-bars
+  :hook ((prog-mode . indent-bars-mode))
   :config
-  (setq highlight-indent-guides-method 'fill
-        highlight-indent-guides-responsive 'stack
-        highlight-indent-guides-auto-enabled t
-        highlight-indent-guides-delay 0.1))
+  (setq indent-bars-color-by-depth '(:regexp "outline-\\([0-9]+\\)" :blend 1)))
+
+;; (use-package! highlight-indent-guides
+;;   :hook (prog-mode . highlight-indent-guides-mode)
+;;   :config
+;;   (setq highlight-indent-guides-method 'fill
+;;         highlight-indent-guides-responsive 'stack
+;;         highlight-indent-guides-auto-enabled t
+;;         highlight-indent-guides-delay 0.1))
 
 (use-package! drag-stuff
   :defer t
@@ -237,7 +247,11 @@
         lsp-headerline-breadcrumb-icons-enable t))
 
 (after! eglot
-  (add-to-list 'eglot-stay-out-of 'flymake))
+  (add-to-list 'eglot-stay-out-of 'flymake)
+  ;; json-mode derives from js-mode; without this Eglot picks the TS server.
+  (add-to-list 'eglot-server-programs
+               '((json-mode json-ts-mode jsonc-mode)
+                 . ("vscode-json-language-server" "--stdio"))))
 
 (after! lsp-mode
   (setq lsp-headerline-breadcrumb-enable t)
@@ -284,7 +298,8 @@
 
 (after! doom-modeline
   (setq doom-modeline-check 'full
-        doom-modeline-check-icon t))
+        doom-modeline-check-icon t
+        doom-modeline-vcs-max-length 50))
 
 (after! flycheck
   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)

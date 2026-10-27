@@ -61,11 +61,16 @@
 (package! copilot-chat
   :recipe (:host github :repo "chep/copilot-chat.el" :files ("*.el")))
 
-(package! highlight-indent-guides
-  :recipe (:host github
-           :repo "DarthFennec/highlight-indent-guides"
-           :branch "master"))
+(package! indent-bars)
 
-;; (package! sly)
+;; (package! highlight-indent-guides
+;;   :recipe (:host github
+;;            :repo "DarthFennec/highlight-indent-guides"
+;;            :branch "master"))
+
+;; Dependencies for the agent-shell package
+(package! shell-maker)
+(package! acp)
+(package! agent-shell)
 
 (package! drag-stuff)
