@@ -223,7 +223,19 @@
 (use-package! indent-bars
   :hook ((prog-mode . indent-bars-mode))
   :config
-  (setq indent-bars-color-by-depth '(:regexp "outline-\\([0-9]+\\)" :blend 1)))
+  (setq indent-bars-color-by-depth '(:regexp "outline-\\([0-9]+\\)" :blend 1)
+        indent-bars-start-column 0))
+
+;; Keep indent-bars spacing in sync with per-directory .editorconfig indent_size
+(after! editorconfig
+  (add-hook 'editorconfig-after-apply-functions
+            (lambda (props)
+              (when-let* ((size (gethash 'indent_size props))
+                          (n (string-to-number size))
+                          ((> n 0)))
+                (setq-local indent-bars-spacing-override n)
+                (when (bound-and-true-p indent-bars-mode)
+                  (indent-bars-reset))))))
 
 ;; (use-package! highlight-indent-guides
 ;;   :hook (prog-mode . highlight-indent-guides-mode)
