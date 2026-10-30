@@ -59,7 +59,7 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
-(setq doom-modeline-height 35)
+(setq doom-modeline-height 40)
 (setq doom-modeline-buffer-file-name-style 'file-name)
 
 (setq frame-title-format '("%b – " (:eval
@@ -223,19 +223,30 @@
 (use-package! indent-bars
   :hook ((prog-mode . indent-bars-mode))
   :config
-  (setq indent-bars-color-by-depth '(:regexp "outline-\\([0-9]+\\)" :blend 1)
-        indent-bars-start-column 0))
+  (setq indent-bars-color-by-depth '(:regexp "outline-\\([0-9]+\\)" :blend 1)))
 
 ;; Keep indent-bars spacing in sync with per-directory .editorconfig indent_size
-(after! editorconfig
-  (add-hook 'editorconfig-after-apply-functions
-            (lambda (props)
-              (when-let* ((size (gethash 'indent_size props))
-                          (n (string-to-number size))
-                          ((> n 0)))
-                (setq-local indent-bars-spacing-override n)
-                (when (bound-and-true-p indent-bars-mode)
-                  (indent-bars-reset))))))
+
+;; (after! indent-bars
+;;   (add-hook! 'indent-bars-mode-hook
+;;     (defun my-sync-indent-bars-with-editorconfig ()
+;;       "Ensure indent-bars uses the correct indentation width set by EditorConfig."
+;;       (setq-local indent-bars-spacing-override
+;;                   (cond
+;;                    (indent-tabs-mode tab-width)
+;;                    ((bound-and-true-p editorconfig-indent-size) editorconfig-indent-size)
+;;                    ((bound-and-true-p standard-indent) standard-indent)
+;;                    (t (indent-bars--guess-spacing)))))))
+
+;; (after! editorconfig
+;;   (add-hook 'editorconfig-after-apply-functions
+;;             (lambda (props)
+;;               (when-let* ((size (gethash 'indent_size props))
+;;                           (n (string-to-number size))
+;;                           ((> n 0)))
+;;                 (setq-local indent-bars-spacing-override n)
+;;                 (when (bound-and-true-p indent-bars-mode)
+;;                   (indent-bars-reset))))))
 
 ;; (use-package! highlight-indent-guides
 ;;   :hook (prog-mode . highlight-indent-guides-mode)
@@ -313,8 +324,44 @@
         doom-modeline-check-icon t
         doom-modeline-vcs-max-length 50))
 
+;; (after! flycheck
+;;   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
+;;   (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
+
 (after! flycheck
+  ;; Chain eglot-check (TS type errors) into javascript-eslint (project ESLint rules)
+  (setq-default flycheck-eglot-exclusive nil)
+  ;; ESLint type-aware rules are slow; wait longer after edits before re-linting
+  (setq flycheck-check-syntax-automatically '(save mode-enabled idle-change)
+        flycheck-idle-change-delay 2)
   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
   (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
+
+;; (use-package! mini-modeline
+;;   :after doom-modeline
+;;   :config
+;;   (setq mini-modeline-enhance-visual t
+;;         mini-modeline-echo-duration 3
+;;         mini-modeline-echo-position "left"
+;;         ;; Leading "\n" puts the status segments on line 2; line 1 is for echo messages
+;;         mini-modeline-r-format
+;;         (cons "\n"
+;;               (doom-modeline--prepare-segments
+;;                '(compilation misc-info project-name battery debug repl lsp
+;;                  minor-modes input-method indent-info buffer-encoding
+;;                  major-mode process vcs check time)))
+;;         mini-modeline-l-format
+;;         (cons "\n"
+;;               (doom-modeline--prepare-segments
+;;                '(window-state workspace-name window-number modals matches
+;;                  follow buffer-info remote-host buffer-position word-count
+;;                  selection-info))))
+;;   ;; Show the echo message on line 1 without hiding the left status segments
+;;   (define-advice mini-modeline-msg (:around (orig) my/keep-left-segments)
+;;     (when-let* ((msg (funcall orig)))
+;;       (concat msg
+;;               (replace-regexp-in-string
+;;                "%" "%%" (format-mode-line mini-modeline-l-format)))))
+;;   (mini-modeline-mode t))
 
 (setq demap-minimap-window-width 15)

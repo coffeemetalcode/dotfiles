@@ -74,3 +74,5 @@
 (package! agent-shell)
 
 (package! drag-stuff)
+
+(package! mini-modeline)
