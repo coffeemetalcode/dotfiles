@@ -184,7 +184,7 @@
   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package! copilot
-  :hook (prog-mode . copilot-mode)
+  ;; :hook (prog-mode . copilot-mode)
   :bind (:map copilot-completion-map
               ("C-c C-k" . 'copilot-clear-overlay)
               ("<tab>" . 'copilot-accept-completion)
@@ -244,6 +244,13 @@
 ;;         highlight-indent-guides-auto-enabled t
 ;;         highlight-indent-guides-delay 0.1))
 
+(use-package! breadcrumb
+  :hook (prog-mode . breadcrumb-local-mode)
+  :config
+  ;; Optional: Customize the maximum length or separators if needed
+  ;; (setq breadcrumb-imenu-max-length 30)
+  )
+
 (use-package! drag-stuff
   :defer t
   :init
@@ -292,7 +299,7 @@
   (setq lsp-headerline-breadcrumb-icons-enable t))
 
 (after! centaur-tabs
-  (centaur-tabs-change-fonts "Lato" 110)
+  (centaur-tabs-change-fonts "Lato" 120)
   (setq centaur-tabs-height 48
         centaur-tabs-style "wave"
         centaur-tabs-show-navigation-buttons t
@@ -319,79 +326,30 @@
                   treemacs-file-face
                   treemacs-tags-face
                   treemacs-on-failure-pulse-face))
-    (set-face-attribute face nil :family "Lato" :height 110)))
+    (set-face-attribute face nil :family "Lato" :height 120)))
 
 (custom-set-variables
  '(ediff-split-window-function (quote split-window-horizontally)))
-
-;; (after! vterm
-;;   (set-popup-rule! "^\\*doom:vterm-popup" :side 'right :size 0.3 :select t :quit nil :ttl 0))
 
 (after! doom-modeline
   (setq doom-modeline-check 'full
         doom-modeline-check-icon t
         doom-modeline-vcs-max-length 50))
 
-;; (add-hook 'flycheck-mode-hook #'flycheck-annotate-mode)
-;; (add-hook 'eglot-managed-mode-hook #'flycheck-eglot-mode)
+(defun my/ts-eslint-flycheck ()
+  "Prefer ESLint over Eglot for JS/TS files."
+  (setq-local flycheck-disabled-checkers '(eglot-check))
+  (setq-local flycheck-checker 'javascript-eslint)
+  (let* ((root (locate-dominating-file default-directory "package.json"))
+         (bin  (and root (expand-file-name "node_modules/.bin/eslint" root))))
+    (when (and bin (file-executable-p bin))
+      (setq-local flycheck-javascript-eslint-executable bin))))
 
-;; (add-hook 'flycheck-mode-hook #'flycheck-verify-setup)
-
-;; (defun my/use-eslint-from-node-modules ()
-;;   (let* ((root (locate-dominating-file
-;;                 (or (buffer-file-name) default-directory)
-;;                 "node_modules"))
-;;          (eslint (and root
-;;                       (expand-file-name "node_modules/.bin/eslint"
-;;                                         root))))
-;;     (when (and eslint (file-executable-p eslint))
-;;       (setq-local flycheck-javascript-eslint-executable eslint))))
-
-
-;; (after! flycheck
-;;   (flycheck-add-mode 'javascript-eslint 'web-mode)
-;;   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
-;;   (add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules))
-
-;; The below block works - reenable it
-;;
-;; In JS/TS buffers Flycheck reports ESLint only; Eglot stays active for
-;; definitions, references, rename, hover and completion.
-;; (add-hook 'eglot-managed-mode-hook
-;;           (lambda ()
-;;             (when (derived-mode-p 'js-base-mode 'typescript-ts-base-mode
-;;                                   'js-mode 'typescript-mode)
-;;               (when (bound-and-true-p flycheck-eglot-mode)
-;;                 (flycheck-eglot-mode -1))
-;;               (setq-local flycheck-checker 'javascript-eslint)
-;;               (flycheck-mode 1)))
-;;           90)
-
-;; (after! flycheck
-;;   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
-;;   (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
-
-;; (after! flycheck
-;;   ;; Chain eglot-check (TS type errors) into javascript-eslint (project ESLint rules)
-;;   (setq-default flycheck-eglot-exclusive nil)
-;;   ;; ESLint type-aware rules are slow; wait longer after edits before re-linting
-;;   (setq flycheck-check-syntax-automatically '(save mode-enabled idle-change)
-;;         flycheck-idle-change-delay 2)
-;;   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
-;;   (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
-
-;; ESLint already reports unused variables/imports and unreachable code, so drop
-;; the TS server's "unnecessary code" hints whenever ESLint is chained after it.
-;; (after! flycheck-eglot
-;;   (define-advice flycheck-eglot--diags-to-error-list
-;;       (:filter-args (args) my/drop-tsserver-unnecessary)
-;;     (list (if flycheck-eglot-exclusive
-;;               (car args)
-;;             (cl-remove-if
-;;              (lambda (diag)
-;;                (memq 'eglot-diagnostic-tag-unnecessary-face
-;;                      (alist-get 'face (flymake-diagnostic-overlay-properties diag))))
-;;              (car args))))))
+(add-hook 'typescript-ts-mode-hook #'my/ts-eslint-flycheck)
+(add-hook 'tsx-ts-mode-hook #'my/ts-eslint-flycheck)
+(add-hook 'js-mode-hook #'my/ts-eslint-flycheck)
+(add-hook 'javascript-mode-hook #'my/ts-eslint-flycheck)
+(add-hook 'web-mode-hook #'my/ts-eslint-flycheck)
 
 ;; (use-package! mini-modeline
 ;;   :after doom-modeline

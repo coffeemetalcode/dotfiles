@@ -76,3 +76,5 @@
 (package! drag-stuff)
 
 (package! mini-modeline)
+
+(package! breadcrumb :recipe (:host github :repo "joaotavora/breadcrumb"))
