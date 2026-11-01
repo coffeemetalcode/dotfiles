@@ -7,11 +7,6 @@
 (add-to-list 'exec-path "$HOME/.nvm/versions/node/v24.15.0/bin")
 
 ;; Optional: Manual command configuration if auto-detection fails
-(setq lsp-clients-angular-language-server-command
-      '("node" "~/.npm-packages/lib/node_modules/@angular/language-server"
-        "--ngProbeLocations" "~/.npm-packages/lib/node_modules"
-        "--tsProbeLocations" "~/.npm-packages/lib/node_modules"
-        "--stdio"))
 
 (setq confirm-kill-emacs #'yes-or-no-p) ;; Force confirmation prompt when exiting Emacs
 
@@ -101,13 +96,6 @@
   (setq tab-width 2 ;; default tab indent
         c-basic-offset 4 ;; C/C++/Java indent
         indent-tabs-mode nil)) ;; use spaces instead of tabs
-
-(after! lsp-mode
-  (add-to-list 'lsp-language-id-configuration '(angular-html-mode . "html"))
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-stdio-connection '("ngserver" "--stdio"))
-                    :major-modes '(typescript-mode html-mode css-mode scss-mode json-mode)
-                    :server-id 'angular-ls)))
 
 (after! web-mode
   (setq web-mode-markup-indent-offset 2
@@ -274,7 +262,27 @@
   ;; json-mode derives from js-mode; without this Eglot picks the TS server.
   (add-to-list 'eglot-server-programs
                '((json-mode json-ts-mode jsonc-mode)
-                 . ("vscode-json-language-server" "--stdio"))))
+                 . ("vscode-json-language-server" "--stdio")))
+  ;; Angular Language Service for templates; probes the project's own
+  ;; node_modules so the server matches the Angular/TypeScript versions in use.
+  (add-to-list 'eglot-server-programs
+               `((html-mode web-mode mhtml-mode)
+                 . ,(lambda (&rest _)
+                      (let* ((local (expand-file-name
+                                     "node_modules"
+                                     (if-let* ((p (project-current)))
+                                         (project-root p)
+                                       default-directory)))
+                             ;; Fall back to the global install, which ships
+                             ;; @angular/language-service next to the server.
+                             (global (expand-file-name
+                                      "../../../.."
+                                      (file-truename
+                                       (executable-find "ngserver"))))
+                             (probe (concat local "," global)))
+                        (list "ngserver" "--stdio"
+                              "--tsProbeLocations" probe
+                              "--ngProbeLocations" probe))))))
 
 (after! lsp-mode
   (setq lsp-headerline-breadcrumb-enable t)
@@ -324,18 +332,66 @@
         doom-modeline-check-icon t
         doom-modeline-vcs-max-length 50))
 
+;; (add-hook 'flycheck-mode-hook #'flycheck-annotate-mode)
+;; (add-hook 'eglot-managed-mode-hook #'flycheck-eglot-mode)
+
+;; (add-hook 'flycheck-mode-hook #'flycheck-verify-setup)
+
+;; (defun my/use-eslint-from-node-modules ()
+;;   (let* ((root (locate-dominating-file
+;;                 (or (buffer-file-name) default-directory)
+;;                 "node_modules"))
+;;          (eslint (and root
+;;                       (expand-file-name "node_modules/.bin/eslint"
+;;                                         root))))
+;;     (when (and eslint (file-executable-p eslint))
+;;       (setq-local flycheck-javascript-eslint-executable eslint))))
+
+
+;; (after! flycheck
+;;   (flycheck-add-mode 'javascript-eslint 'web-mode)
+;;   (flycheck-add-mode 'javascript-eslint 'typescript-mode)
+;;   (add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules))
+
+;; The below block works - reenable it
+;;
+;; In JS/TS buffers Flycheck reports ESLint only; Eglot stays active for
+;; definitions, references, rename, hover and completion.
+;; (add-hook 'eglot-managed-mode-hook
+;;           (lambda ()
+;;             (when (derived-mode-p 'js-base-mode 'typescript-ts-base-mode
+;;                                   'js-mode 'typescript-mode)
+;;               (when (bound-and-true-p flycheck-eglot-mode)
+;;                 (flycheck-eglot-mode -1))
+;;               (setq-local flycheck-checker 'javascript-eslint)
+;;               (flycheck-mode 1)))
+;;           90)
+
 ;; (after! flycheck
 ;;   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
 ;;   (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
 
-(after! flycheck
-  ;; Chain eglot-check (TS type errors) into javascript-eslint (project ESLint rules)
-  (setq-default flycheck-eglot-exclusive nil)
-  ;; ESLint type-aware rules are slow; wait longer after edits before re-linting
-  (setq flycheck-check-syntax-automatically '(save mode-enabled idle-change)
-        flycheck-idle-change-delay 2)
-  (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
-  (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
+;; (after! flycheck
+;;   ;; Chain eglot-check (TS type errors) into javascript-eslint (project ESLint rules)
+;;   (setq-default flycheck-eglot-exclusive nil)
+;;   ;; ESLint type-aware rules are slow; wait longer after edits before re-linting
+;;   (setq flycheck-check-syntax-automatically '(save mode-enabled idle-change)
+;;         flycheck-idle-change-delay 2)
+;;   (add-hook 'flycheck-mode-hook #'doom-modeline-update-flycheck)
+;;   (add-hook 'flycheck-status-changed-functions #'doom-modeline-update-flycheck))
+
+;; ESLint already reports unused variables/imports and unreachable code, so drop
+;; the TS server's "unnecessary code" hints whenever ESLint is chained after it.
+;; (after! flycheck-eglot
+;;   (define-advice flycheck-eglot--diags-to-error-list
+;;       (:filter-args (args) my/drop-tsserver-unnecessary)
+;;     (list (if flycheck-eglot-exclusive
+;;               (car args)
+;;             (cl-remove-if
+;;              (lambda (diag)
+;;                (memq 'eglot-diagnostic-tag-unnecessary-face
+;;                      (alist-get 'face (flymake-diagnostic-overlay-properties diag))))
+;;              (car args))))))
 
 ;; (use-package! mini-modeline
 ;;   :after doom-modeline

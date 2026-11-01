@@ -92,6 +92,7 @@
        ;;grammar           ; tasing grammar mistake every you make
 
        :tools
+       (lsp +eglot)      ; M-x vscode
        ;;ansible
        ;;biblio            ; Writes a PhD for you (citation needed)
        ;;collab            ; buffers with friends
@@ -103,7 +104,6 @@
        (eval +overlay)     ; run code, run (also, repls)
        lookup              ; navigate your code and its documentation
        ;;llm               ; when I said you needed friends, I didn't mean...
-       (lsp +eglot)      ; M-x vscode
        magit             ; a git porcelain for Emacs
        ;;make              ; run make tasks from Emacs
        ;;pass              ; password manager for nerds
@@ -181,6 +181,7 @@
        ;;solidity          ; do you need a blockchain? No.
        ;;swift             ; who asked for emoji variables?
        ;;terra             ; Earth and Moon in alignment for performance.
+       (typescript +lsp +tree-sitter)
        (web +lsp +tree-sitter +emmet)               ; the tubes
        (yaml +lsp +tree=sitter)              ; JSON, but readable
        ;;zig               ; C, but simpler
