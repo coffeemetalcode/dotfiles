@@ -249,7 +249,17 @@
   :config
   ;; Optional: Customize the maximum length or separators if needed
   ;; (setq breadcrumb-imenu-max-length 30)
-  )
+  (setq breadcrumb-project-crumb-separator " ❯ ")
+  (setq breadcrumb-imenu-crumb-separator " ❯ "))
+
+(after! breadcrumb
+  (dolist (face '(breadcrumb-face
+                  breadcrumb-project-base-face
+                  breadcrumb-imenu-crumbs-face
+                  breadcrumb-project-crumbs-face
+                  breadcrumb-project-leaf-face
+                  breadcrumb-imenu-leaf-face))
+    (set-face-attribute face nil :family "Lato" :height 130)))
 
 (use-package! drag-stuff
   :defer t
@@ -299,7 +309,7 @@
   (setq lsp-headerline-breadcrumb-icons-enable t))
 
 (after! centaur-tabs
-  (centaur-tabs-change-fonts "Lato" 120)
+  (centaur-tabs-change-fonts "Lato" 130)
   (setq centaur-tabs-height 48
         centaur-tabs-style "wave"
         centaur-tabs-show-navigation-buttons t
@@ -326,7 +336,7 @@
                   treemacs-file-face
                   treemacs-tags-face
                   treemacs-on-failure-pulse-face))
-    (set-face-attribute face nil :family "Lato" :height 120)))
+    (set-face-attribute face nil :family "Lato" :height 130)))
 
 (custom-set-variables
  '(ediff-split-window-function (quote split-window-horizontally)))
@@ -336,15 +346,61 @@
         doom-modeline-check-icon t
         doom-modeline-vcs-max-length 50))
 
+(defun my/nearest-workspace-root (dir)
+  "Return the nearest ancestor that looks like a JS/TS package workspace.
+
+This prefers a nested workspace/package root (for example `ui/` or `api/` in a
+monorepo) while still falling back to the repo root for single-package repos."
+  (let ((current (expand-file-name dir)))
+    (while (and current
+                (not (file-exists-p (expand-file-name "package.json" current)))
+                (not (file-exists-p (expand-file-name "tsconfig.json" current))))
+      (let ((parent (file-name-directory (directory-file-name current))))
+        (if (equal parent current)
+            (setq current nil)
+          (setq current parent))))
+    current))
+
+(defun my/ts-workspace-root ()
+  "Return the most relevant JS/TS workspace root for the current buffer."
+  (or (my/nearest-workspace-root default-directory)
+      (when-let* ((project (project-current nil)))
+        (project-root project))
+      default-directory))
+
+(defun my/ts-eglot-workspace-config ()
+  "Give Eglot the local TypeScript SDK and Angular language service when present."
+  ;; Doesn't currently cause Eglot to resolve npm workspace configs in monorepo
+  (let* ((root (my/ts-workspace-root))
+         (tslib (and root (expand-file-name "node_modules/typescript/lib" root)))
+         (angular-ls (and root
+                          (expand-file-name "node_modules/@angular/language-service" root)))
+         (tsdk (and tslib (file-directory-p tslib) tslib))
+         (has-angular-ls (and angular-ls (file-directory-p angular-ls))))
+    (when root
+      `((:typescript .
+         ((:tsdk . ,tsdk)
+          ,@(when has-angular-ls
+              '((:plugins . [(:name "@angular/language-service")])))))))))
+
 (defun my/ts-eslint-flycheck ()
-  "Prefer ESLint over Eglot for JS/TS files."
+  "Prefer the nearest workspace-local ESLint binary over Eglot for JS/TS files."
   (setq-local flycheck-disabled-checkers '(eglot-check))
   (setq-local flycheck-checker 'javascript-eslint)
-  (let* ((root (locate-dominating-file default-directory "package.json"))
+  (let* ((root (my/ts-workspace-root))
          (bin  (and root (expand-file-name "node_modules/.bin/eslint" root))))
     (when (and bin (file-executable-p bin))
       (setq-local flycheck-javascript-eslint-executable bin))))
 
+(defun my/ts-eglot-workspace ()
+  "Set the workspace-local TypeScript + Angular settings for Eglot."
+  (when-let* ((config (my/ts-eglot-workspace-config)))
+    (setq-local eglot-workspace-configuration config)))
+
+(add-hook 'typescript-mode-hook #'my/ts-eglot-workspace)
+(add-hook 'typescript-ts-mode-hook #'my/ts-eglot-workspace)
+(add-hook 'tsx-ts-mode-hook #'my/ts-eglot-workspace)
+(add-hook 'typescript-mode-hook #'my/ts-eslint-flycheck)
 (add-hook 'typescript-ts-mode-hook #'my/ts-eslint-flycheck)
 (add-hook 'tsx-ts-mode-hook #'my/ts-eslint-flycheck)
 (add-hook 'js-mode-hook #'my/ts-eslint-flycheck)
